@@ -231,6 +231,8 @@ class Scraper(object):
                         diff_min=(diff.days * 24 * 60) + (diff.seconds/60)-1
                         if ((diff_min<=1) or (isOriginDestination==1)):
                            result['delay']='0'
+                        elif (diff_min>30):
+                           result['delay']='-1'
                         else:
                            result['delay']=str(diff_min)
 
