@@ -70,22 +70,22 @@ class CSV(Store):
         self.filename = filename
         if not os.path.isfile(self.filename):
             with open(self.filename, "wb") as output:
-                output.write('TimeMark,ScheduledTime,Delay,Station,Destination,Line,TrainLength,Bikeflag\n')
+                output.write('TimeMark,ScheduledTime,Delay,Station,Origin,Destination,Line,TrainLength\n')
 
     def save(self, data):
         with open(self.filename, 'a') as output:
             for l in data:
                 if l['duplicate_flg']=='0':
-                    output.write(l['time_mark']+','+l['scheduled_time']+','+l['delay']+','+ l['station']+','+l['destination']+','+l['line']+','+l['train_length']+','+l['bikeflag']+'\n')
+                    output.write(l['time_mark']+','+l['scheduled_time']+','+l['delay']+','+ l['station']+','+l['origin']+','+l['destination']+','+l['line']+','+l['train_length']+'\n')
 
 class Display(Store):
     def __init__(self):
-        print 'TimeMark,ScheduledTime,Delay,Station,Destination,Line,TrainLength,Bikeflag'
+        print 'TimeMark,ScheduledTime,Delay,Station,Origin,Destination,Line,TrainLength'
 
     def save(self, data):
         for l in data:
             if l['duplicate_flg']=='0':
-                print l['time_mark']+','+l['scheduled_time']+','+l['delay']+','+ l['station']+','+l['destination']+','+l['line']+','+l['train_length']+','+l['bikeflag']
+                print l['time_mark']+','+l['scheduled_time']+','+l['delay']+','+ l['station']+','+ l['origin']+','+l['destination']+','+l['line']+','+l['train_length']
 
 
 class Scraper(object):
@@ -144,8 +144,8 @@ class Scraper(object):
             resp_dict=xmltodict.parse(resp_xml.text)
             routes_num=len(resp_dict['root']['routes']['route'])
             for i in range(0,routes_num-1):
-                Origin_Destination.append([resp_dict['root']['routes']['route'][i]['origin'],resp_dict['root']['routes']['route'][i]['destination']])
-            df_od=pd.DataFrame(Origin_Destination,columns=['Origin','Destination'])
+                Origin_Destination.append([resp_dict['root']['routes']['route'][i]['routeID'],resp_dict['root']['routes']['route'][i]['origin'],resp_dict['root']['routes']['route'][i]['destination']])
+                df_od=pd.DataFrame(Origin_Destination,columns=['Line','Origin','Destination'])
             if queue:
                 queue.put(df_od)
             else:
@@ -223,8 +223,10 @@ class Scraper(object):
                              (self.df_ssch['Destination']==destination) &
                              (pd.to_datetime(self.df_ssch['ScheduledTime'])==result['scheduled_time'])
                              ),['Line']].iloc[0]['Line']
+                             result['origin'] = self.df_od.loc[(self.df_od['Line']==result['line']),['Origin']].iloc[0]['Origin']
                         except:
                             result['line']='Not in Schedule'
+                            result['origin']='Not in Schedule'
                         #delay in minutes
                         #less then 1 min delay is due to the scraper and API delays
                         diff = parser.parse(result['time_mark'])-parser.parse(result['scheduled_time'])
@@ -239,6 +241,7 @@ class Scraper(object):
                     else:
                         result['scheduled_time']=result['time_mark']
                         result['line']='None'
+                        result['origin']='None'
                         result['delay']='0'
                     real_departure_data.append(result)
         #.......................................................................
