@@ -1,0 +1,5 @@
+---
+bart_api_key: 'ABC'
+bart_scraper_log: 'XYZ'
+real_time_data: 'real_time_data.csv'
+stations_schedule: 'stations_schedule_{schedule_date}.csv'
